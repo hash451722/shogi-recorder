@@ -5,11 +5,13 @@ import numpy as np
 import onnxruntime as ort
 
 
+
 class ClassifyPiece():
     def __init__(self) -> None:
-        self.path_current_dir = pathlib.Path(__file__).parent
-        self.path_piece_onnx = self.path_current_dir.joinpath("models", "piece.onnx")
-        self.path_pickle = pathlib.Path(__file__).parent.joinpath("models", "classes.pickle")
+        path_current_dir = pathlib.Path(__file__).parent
+        self.path_piece_onnx = path_current_dir.joinpath("models", "piece.onnx")
+        self.path_pickle = path_current_dir.joinpath("models", "classes.pickle")
+        self.idx_to_class = self._idx_to_class()
 
 
     def run(self, img:np.ndarray) -> list:
@@ -27,26 +29,25 @@ class ClassifyPiece():
         # print(np.exp(preds))
         # print(np.sum(np.exp(preds)))  # 81
         preds_idx = np.argmax(preds, axis=1)  # 最も高い確率の駒idxだけ取り出す
-        list81 = self._convert_idx_to_class(preds_idx)  # 3文字のクラス名に変換
+        list81 = self._convert_idx_to_class(list(preds_idx))  # 3文字のクラス名に変換
         return list81
 
 
-    def _convert_idx_to_class(self, predicted_idx):
-        classes, _ = self._idx_to_name()
+    def _convert_idx_to_class(self, predicted_idx:list) -> list:
+        classes = self.idx_to_class
         predicted_class = []
-        for n, idx in enumerate(predicted_idx):
-            predicted_class.append( classes[ str(predicted_idx[n]) ] )
+        for idx in predicted_idx:
+            predicted_class.append( classes[str(idx)] )
         return predicted_class
 
 
-    def _idx_to_name(self):
+    def _idx_to_class(self) -> dict:
         with open(self.path_pickle, mode='rb') as f:
             classes = pickle.load(f)
-
         d = {}
         for k, v in classes.items():
             d[str(v)] = k
-        return d, len(classes)
+        return d
 
 
 
@@ -54,7 +55,7 @@ class ClassifyPiece():
 if __name__ == "__main__":
     img_cells_dummy = np.random.randn(81, 1, 64, 64)  # (N, C, H, W)
 
-    cf = ClassifyPiece()
-    list81 = cf.run(img_cells_dummy)
+    cp = ClassifyPiece()
+    list81 = cp.run(img_cells_dummy)
     print(len(list81))
     print(list81)
