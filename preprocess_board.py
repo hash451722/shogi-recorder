@@ -3,7 +3,6 @@ import numpy as np
 
 
 
-
 class PreprocessBoard():
     def __init__(self, cell_size:int=64, mean:float=0.5, sd:float=0.5) -> None:
         self.cell_size = cell_size
@@ -18,24 +17,11 @@ class PreprocessBoard():
         return img_cells
 
 
-    def _preprocess(self, img) -> np.ndarray:
-        '''
-        抽出した盤面画像の前処理
-        入力画像は白黒(channel=1)
-        正規化(0-1) -> 標準化(平均, 標準偏差)
-        標準化のパラメータ(mean, sd)は学習時の値を設定する
-        '''
-        img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        img_gray01 = img_gray/255.0  # 0-255 -> 0.0-1.0
-        img_dst = (img_gray01 - self.mean) / self.sd
-        return img_dst
-
-
     def _extract_board(self, img, board_corners) -> np.ndarray:
         '''
         盤面の抽出(切り抜き)
         input: OpenCV image, [(x0, y0), (x1, y1), (x2, y2), (x3, y3)]
-        return: OpenCV image
+        return: OpenCV image (H, W, C)
         '''
         dstSize = 9*self.cell_size
 
@@ -44,6 +30,20 @@ class PreprocessBoard():
 
         mat = cv2.getPerspectiveTransform(pts1,pts2)
         img_dst = cv2.warpPerspective(img, mat, (dstSize, dstSize))
+        return img_dst
+
+
+    def _preprocess(self, img_bgr) -> np.ndarray:
+        '''
+        抽出した盤面画像の前処理
+        入力画像はBGR(channels=3)
+        正規化(0-1) -> 標準化(平均, 標準偏差)
+        標準化のパラメータ(mean, sd)は学習時の値を設定する
+        '''
+        img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+        img_rgb01 = img_rgb/255.0  # 0-255 -> 0.0-1.0
+        img_std = (img_rgb01 - self.mean) / self.sd
+        img_dst = np.transpose(img_std, (2, 0, 1))  # (H, W, C) -> (C, H, W)
         return img_dst
 
 
@@ -57,12 +57,12 @@ class PreprocessBoard():
         cols = 9  # 列数　筋
 
         squares = []
-        for row_img in np.array_split(img, rows, axis=0):
-            for chunk in np.array_split(row_img, cols, axis=1):
+        for row_img in np.array_split(img, rows, axis=1):
+            for chunk in np.array_split(row_img, cols, axis=2):
                 squares.append(chunk)
 
         squares = np.array(squares)
-        squares = squares[:, np.newaxis, :, :] # 次元追加　(81, 64, 64) => (81, 1, 64, 64)
+        # squares = squares[:, np.newaxis, :, :] # 次元追加　(81, 64, 64) => (81, 1, 64, 64)
         return squares
 
 
@@ -74,12 +74,27 @@ if __name__ == "__main__":
     path_img = path_current_dir.joinpath("sample.jpg")
     
     img_src = cv2.imread(str(path_img))  # (H, W, C)
-    board_corners = [(318, 301), (1254, 300), (320, 1312), (1254, 1314)]
+    board_corners = [(55, 36), (743, 26), (60, 762), (739, 766)]
 
-    pb = PreprocessBoard(mean=0.5, sd=0.5)
+    pb = PreprocessBoard(mean=0, sd=1)
+
+    # img_b = pb._extract_board(img_src, board_corners)
+    # cv2.imshow("Push Q key", img_b)
+    # cv2.waitKey()  # push q key
+    # exit()
+
     img_cells = pb.run(img_src, board_corners)
-    print(img_cells.shape)
     print(img_cells)
+    print(type(img_cells))
+    print(img_cells.shape)
+    print(type(img_cells[0]))
         
-    cv2.imshow("Push Q key", img_cells[15][0])
-    cv2.waitKey()  # push q key
+    # cv2.imshow("Push Q key", img_cells[10])
+    # cv2.waitKey()  # push q key
+
+
+    # # check
+    # import torch
+    # import torchvision
+    # x = torch.from_numpy(img_cells[79].astype(np.float32)).clone()  # numpy to tensor
+    # torchvision.utils.save_image(x, "temp.png")
