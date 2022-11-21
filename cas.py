@@ -1,7 +1,9 @@
 import pathlib
 
-import cv2
 
+class Csa():
+    def __init__(self) -> None:
+        self.version = "V2.2"
 
 
 
