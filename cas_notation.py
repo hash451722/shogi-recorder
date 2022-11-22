@@ -1,7 +1,7 @@
 import pathlib
 
 
-class Csa():
+class CsaNotation():
     def __init__(self) -> None:
         self.version = "V2.2"
 

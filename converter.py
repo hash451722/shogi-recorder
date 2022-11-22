@@ -41,6 +41,16 @@ def convert_sfen(list81:list) -> str:
 
 
 
+def cas(csa:str) -> str:
+    
+    turn = csa[0]
+
+
+
+
+
+
+
 
 
 if __name__ == "__main__":

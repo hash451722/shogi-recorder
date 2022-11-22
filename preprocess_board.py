@@ -13,7 +13,7 @@ class PreprocessBoard():
     def run(self, img_src:np.ndarray, board_corners:list) -> np.ndarray:
         img_extract = self._extract_board(img_src, board_corners)  # (576, 576, 3)
         img_preprocessed = self._preprocess(img_extract)  # (576, 576)
-        img_cells = self._parcellate_board(img_preprocessed)  # (81, 1, 64, 64)
+        img_cells = self._parcellate_board(img_preprocessed)  # (81, 3, 64, 64)
         return img_cells
 
 
@@ -55,14 +55,12 @@ class PreprocessBoard():
         '''
         rows = 9  # 行数　段
         cols = 9  # 列数　筋
-
         squares = []
         for row_img in np.array_split(img, rows, axis=1):
             for chunk in np.array_split(row_img, cols, axis=2):
                 squares.append(chunk)
 
         squares = np.array(squares)
-        # squares = squares[:, np.newaxis, :, :] # 次元追加　(81, 64, 64) => (81, 1, 64, 64)
         return squares
 
 

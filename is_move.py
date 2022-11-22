@@ -6,15 +6,25 @@ class IsMove():
     '''
     def __init__(self) -> None:
         self.phase_previous = self.phase_init()[:]
+        self.num2kanji = {
+            "1":"一", "2":"二", "3":"三", "4":"四", "5":"五", "6":"六", "7":"七", "8":"八", "9":"九"
+        }
+        self.num2alphabet = {
+            "1":"a", "2":"b", "3":"c", "4":"d", "5":"e", "6":"f", "7":"g", "8":"h", "9":"i"
+        }
 
 
     def run(self, phase0:list, phase1:list) -> str:
         '''
         return csa
-        ex. "+7776FU"
+        ex. "+7776FU", "7g7f"
         '''
-        move = self.move_csa(phase0, phase1)
-        return move
+        csa = self.move_csa(phase0, phase1)
+        if csa is None:
+            usi = None
+        else:
+            usi = csa[1] + self.num2alphabet[str(csa[2])] + csa[3] + self.num2alphabet[str(csa[4])]
+        return csa, usi
 
 
     def move_csa(self, phase0:list, phase1:list) -> str:
@@ -43,7 +53,7 @@ class IsMove():
                 pos0 = self.idx_table(changed_cell_idx[1])
                 pos1 = self.idx_table(changed_cell_idx[0])
                 piece = phase1[changed_cell_idx[0]]
-        else:  # 誤認識
+        else:  # 3個以上のマスが変化していたら誤認識
             move = None
             print("Misrecognition")
         
@@ -125,5 +135,6 @@ if __name__ == "__main__":
         "bky", "bke", "bgi", "bki", "bou", "bki", "bgi", "bke", "bky"
     ]
 
-    csa_move = im.run(phase0, phase1)
+    csa_move, usi_move = im.run(phase0, phase1)
     print(csa_move)
+    print(usi_move)
